@@ -69,5 +69,43 @@ export const api = {
       body: JSON.stringify(credentials),
     }),
 
-  // Outros endpoints podem ser adicionados aqui no futuro
+  // Estatísticas administrativas
+  getSystemStats: () =>
+    makeRequest<import('@/types/auth').ApiResponse<import('@/types/auth').SystemStats>>('/admin/stats'),
+
+  // Estatísticas de conteúdo
+  getContentStats: () =>
+    makeRequest<import('@/types/auth').ApiResponse<import('@/types/auth').ContentStats>>('/contents/admin/stats'),
+
+  // Health check completo
+  getHealthStatus: () =>
+    makeRequest<import('@/types/auth').HealthStatus>('/health/full'),
+
+  // Listar usuários (admin)
+  getAdminUsers: (params?: {
+    limit?: number
+    offset?: number
+    search?: string
+    status?: string
+    sort_by?: string
+    sort_order?: string
+  }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : ''
+    return makeRequest<import('@/types/auth').ApiResponse<import('@/types/auth').AdminUser[]>>(`/admin/users${query}`)
+  },
+
+  // Listar conteúdos
+  getContents: (params?: {
+    categoria?: string
+    subcategoria?: string
+    ativo?: string
+    limit?: number
+    offset?: number
+    search?: string
+    sort_by?: string
+    sort_order?: string
+  }) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : ''
+    return makeRequest<import('@/types/auth').ApiResponse<import('@/types/auth').Content[]>>(`/contents${query}`)
+  },
 }
