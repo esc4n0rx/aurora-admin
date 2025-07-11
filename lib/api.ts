@@ -108,4 +108,47 @@ export const api = {
     const query = params ? '?' + new URLSearchParams(params as any).toString() : ''
     return makeRequest<import('@/types/auth').ApiResponse<import('@/types/auth').Content[]>>(`/contents${query}`)
   },
+
+  // Novos endpoints para gerenciamento de conteúdos
+  getContent: (contentId: string) =>
+    makeRequest<import('@/types/content').ContentResponse>(`/contents/${contentId}`),
+
+  createContent: (data: import('@/types/content').CreateContentRequest) =>
+    makeRequest<import('@/types/content').ContentResponse>('/contents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateContent: (contentId: string, data: import('@/types/content').UpdateContentRequest) =>
+    makeRequest<import('@/types/content').ContentResponse>(`/contents/${contentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteContent: (contentId: string) =>
+    makeRequest<{ success: boolean; message: string }>(`/contents/${contentId}`, {
+      method: 'DELETE',
+    }),
+
+  getContentAdminStats: () =>
+    makeRequest<import('@/types/content').ContentStats>('/contents/admin/stats'),
+
+  getContentViewStats: (contentId: string, timeRange?: string) => {
+    const query = timeRange ? `?timeRange=${timeRange}` : ''
+    return makeRequest<any>(`/contents/${contentId}/stats${query}`)
+  },
+
+  getPopularContents: (limit?: number) => {
+    const queryParams = limit ? `?limit=${limit}` : ''
+    return makeRequest<import('@/types/content').ContentListResponse>(
+      `/contents/popular${queryParams}`
+    )
+  },
+
+  getSeriesEpisodes: (seriesName: string, season?: number) => {
+    const queryParams = season ? `?season=${season}` : ''
+    return makeRequest<import('@/types/content').ContentListResponse>(
+      `/contents/series/${seriesName}/episodes${queryParams}`
+    )
+  },
 }

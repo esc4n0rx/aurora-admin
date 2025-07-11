@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -19,18 +19,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Upload, X, Plus, Film, Tv } from "lucide-react"
+import { Upload, X, Plus, Film, Tv, Save } from "lucide-react"
 import { api, ApiError } from "@/lib/api"
 import { toast } from "sonner"
-import type { CreateContentRequest } from "@/types/content"
+import type { Content, UpdateContentRequest } from "@/types/content"
 
-interface AddContentModalProps {
+interface EditContentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  content: Content | null
   onSuccess?: () => void
 }
 
-export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentModalProps) {
+export function EditContentModal({ open, onOpenChange, content, onSuccess }: EditContentModalProps) {
   const [formData, setFormData] = useState({
     nome: "",
     url_transmissao: "",
@@ -57,12 +58,40 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
   const [newLegenda, setNewLegenda] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
+  useEffect(() => {
+    if (content) {
+      setFormData({
+        nome: content.nome,
+        url_transmissao: content.url_transmissao,
+        poster: content.poster,
+        categoria: content.categoria,
+        subcategoria: content.subcategoria,
+        ativo: content.ativo,
+        rating: content.rating,
+        qualidades: content.qualidades || [],
+        metadata: {
+          descricao: content.metadata.descricao || "",
+          duracao: content.metadata.duracao || 0,
+          ano_lancamento: content.metadata.ano_lancamento || 0,
+          diretor: content.metadata.diretor || "",
+          elenco: content.metadata.elenco?.join(", ") || "",
+          idade_recomendada: content.metadata.idade_recomendada || "",
+          idioma: content.metadata.idioma || "português",
+          legendas: content.metadata.legendas || [],
+          trailer_url: content.metadata.trailer_url || "",
+        },
+      })
+    }
+  }, [content])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!content) return
+
     setIsLoading(true)
 
     try {
-      const createData: CreateContentRequest = {
+      const updateData: UpdateContentRequest = {
         nome: formData.nome,
         url_transmissao: formData.url_transmissao,
         poster: formData.poster,
@@ -77,40 +106,17 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
         },
       }
 
-      await api.createContent(createData)
+      await api.updateContent(content.id, updateData)
       
-      toast.success("Conteúdo criado com sucesso!")
+      toast.success("Conteúdo atualizado com sucesso!")
       onOpenChange(false)
       onSuccess?.()
-      
-      // Reset form
-      setFormData({
-        nome: "",
-        url_transmissao: "",
-        poster: "",
-        categoria: "",
-        subcategoria: "",
-        ativo: true,
-        rating: 0,
-        qualidades: [],
-        metadata: {
-          descricao: "",
-          duracao: 0,
-          ano_lancamento: 0,
-          diretor: "",
-          elenco: "",
-          idade_recomendada: "",
-          idioma: "português",
-          legendas: [],
-          trailer_url: "",
-        },
-      })
     } catch (error) {
-      console.error('Erro ao criar conteúdo:', error)
+      console.error('Erro ao atualizar conteúdo:', error)
       if (error instanceof ApiError) {
         toast.error(error.message)
       } else {
-        toast.error("Erro inesperado ao criar conteúdo")
+        toast.error("Erro inesperado ao atualizar conteúdo")
       }
     } finally {
       setIsLoading(false)
@@ -151,16 +157,18 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
     })
   }
 
+  if (!content) return null
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Film className="h-5 w-5" />
-            <span>Adicionar Novo Conteúdo</span>
+            <span>Editar Conteúdo</span>
           </DialogTitle>
           <DialogDescription>
-            Preencha as informações do novo filme ou série para adicionar à plataforma
+            Modifique as informações do conteúdo selecionado
           </DialogDescription>
         </DialogHeader>
 
@@ -207,8 +215,6 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
                       <SelectItem value="anime">Anime</SelectItem>
                       <SelectItem value="desenho">Desenho</SelectItem>
                       <SelectItem value="documentario">Documentário</SelectItem>
-                      <SelectItem value="curta">Curta-metragem</SelectItem>
-                      <SelectItem value="minisserie">Minissérie</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -231,7 +237,7 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="categoria">Categoria *</Label>
+                  <Label htmlFor="categoria">Categoria</Label>
                   <Select 
                     value={formData.categoria} 
                     onValueChange={(value) => setFormData({ ...formData, categoria: value })}
@@ -241,23 +247,13 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="acao">Ação</SelectItem>
-                      <SelectItem value="aventura">Aventura</SelectItem>
                       <SelectItem value="comedia">Comédia</SelectItem>
                       <SelectItem value="drama">Drama</SelectItem>
                       <SelectItem value="terror">Terror</SelectItem>
-                      <SelectItem value="ficcao_cientifica">Ficção Científica</SelectItem>
-                      <SelectItem value="fantasia">Fantasia</SelectItem>
                       <SelectItem value="romance">Romance</SelectItem>
+                      <SelectItem value="ficcao_cientifica">Ficção Científica</SelectItem>
                       <SelectItem value="thriller">Thriller</SelectItem>
                       <SelectItem value="documentario">Documentário</SelectItem>
-                      <SelectItem value="animacao">Animação</SelectItem>
-                      <SelectItem value="crime">Crime</SelectItem>
-                      <SelectItem value="guerra">Guerra</SelectItem>
-                      <SelectItem value="historia">História</SelectItem>
-                      <SelectItem value="musica">Música</SelectItem>
-                      <SelectItem value="misterio">Mistério</SelectItem>
-                      <SelectItem value="familia">Família</SelectItem>
-                      <SelectItem value="biografia">Biografia</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -292,25 +288,19 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Detalhes de Produção */}
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-semibold text-lg">Detalhes de Produção</h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="diretor">Diretor</Label>
+                  <Label htmlFor="rating">Avaliação (0-10)</Label>
                   <Input
-                    id="diretor"
-                    value={formData.metadata.diretor}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      metadata: { ...formData.metadata, diretor: e.target.value } 
-                    })}
-                    placeholder="Nome do diretor"
+                    id="rating"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="10"
+                    value={formData.rating}
+                    onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) || 0 })}
+                    placeholder="8.5"
                   />
                 </div>
 
@@ -335,36 +325,6 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
                       <SelectItem value="18+">18 anos</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="elenco">Elenco Principal</Label>
-                  <Textarea
-                    id="elenco"
-                    value={formData.metadata.elenco}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      metadata: { ...formData.metadata, elenco: e.target.value } 
-                    })}
-                    placeholder="Separe os nomes por vírgula: Ator 1, Atriz 2, Ator 3..."
-                    rows={2}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="rating">Avaliação (0-10)</Label>
-                  <Input
-                    id="rating"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="10"
-                    value={formData.rating}
-                    onChange={(e) => setFormData({ ...formData, rating: parseFloat(e.target.value) || 0 })}
-                    placeholder="8.5"
-                  />
                 </div>
               </div>
             </CardContent>
@@ -420,7 +380,7 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
               <h3 className="font-semibold text-lg">Qualidades e Legendas</h3>
 
               <div className="space-y-2">
-                <Label>Qualidades *</Label>
+                <Label>Qualidades</Label>
                 <div className="flex space-x-2">
                   <Input
                     value={newQualidade}
@@ -490,7 +450,7 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Publicar Imediatamente</Label>
+                  <Label>Ativo</Label>
                   <p className="text-sm text-muted-foreground">O conteúdo ficará visível para os usuários</p>
                 </div>
                 <Switch
@@ -507,7 +467,8 @@ export function AddContentModal({ open, onOpenChange, onSuccess }: AddContentMod
             Cancelar
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading} className="bg-primary hover:bg-primary/90">
-            {isLoading ? "Salvando..." : "Adicionar Conteúdo"}
+            <Save className="mr-2 h-4 w-4" />
+            {isLoading ? "Salvando..." : "Salvar Alterações"}
           </Button>
         </DialogFooter>
       </DialogContent>
