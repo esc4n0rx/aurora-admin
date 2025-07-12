@@ -1,3 +1,4 @@
+// lib/api.ts
 const API_BASE_URL = 'http://localhost:3000/api/v1'
 
 export class ApiError extends Error {
@@ -54,6 +55,44 @@ async function makeRequest<T>(
     }
     
     // Erro de rede ou parsing
+    throw new ApiError(
+      'Erro de conexão. Verifique sua internet e tente novamente.',
+      0
+    )
+  }
+}
+
+// Função auxiliar para fazer requests para nossa própria API Next.js
+async function makeInternalRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new ApiError(
+        errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+        response.status,
+        errorData
+      )
+    }
+
+    return await response.json()
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+    
     throw new ApiError(
       'Erro de conexão. Verifique sua internet e tente novamente.',
       0
@@ -150,5 +189,29 @@ export const api = {
     return makeRequest<import('@/types/content').ContentListResponse>(
       `/contents/series/${seriesName}/episodes${queryParams}`
     )
+  },
+
+  // TMDB Integration - Internal API calls
+  searchTMDB: (query: string, type: 'multi' | 'movie' | 'tv' = 'multi', page = 1) => {
+    const params = new URLSearchParams({
+      query,
+      type,
+      page: page.toString(),
+    })
+    return makeInternalRequest<{
+      success: boolean
+      data: import('@/types/tmdb').TMDBSearchResponse
+    }>(`/api/tmdb/search?${params}`)
+  },
+
+  getTMDBDetails: (id: number, type: 'movie' | 'tv') => {
+    const params = new URLSearchParams({
+      id: id.toString(),
+      type,
+    })
+    return makeInternalRequest<{
+      success: boolean
+      data: import('@/types/tmdb').TMDBMovieDetails | import('@/types/tmdb').TMDBTVDetails
+    }>(`/api/tmdb/details?${params}`)
   },
 }
