@@ -120,7 +120,7 @@ export const api = {
   getHealthStatus: () =>
     makeRequest<import('@/types/auth').HealthStatus>('/health/full'),
 
-  // Listar usuários (admin)
+  // Listar usuários (admin) - ATUALIZADO
   getAdminUsers: (params?: {
     limit?: number
     offset?: number
@@ -132,6 +132,37 @@ export const api = {
     const query = params ? '?' + new URLSearchParams(params as any).toString() : ''
     return makeRequest<import('@/types/auth').ApiResponse<import('@/types/auth').AdminUser[]>>(`/admin/users${query}`)
   },
+
+  // NOVOS ENDPOINTS PARA GERENCIAMENTO DE USUÁRIOS
+  
+  // Obter detalhes de um usuário específico
+  getAdminUserDetails: (userId: string) =>
+    makeRequest<import('@/types/auth').ApiResponse<import('@/types/auth').AdminUser>>(`/admin/users/${userId}`),
+
+  // Bloquear usuário
+  blockUser: (userId: string, data: import('@/types/auth').BlockUserRequest) =>
+    makeRequest<import('@/types/auth').BlockUserResponse>(`/admin/users/${userId}/block`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Desbloquear usuário
+  unblockUser: (userId: string) =>
+    makeRequest<import('@/types/auth').UnblockUserResponse>(`/admin/users/${userId}/unblock`, {
+      method: 'POST',
+    }),
+
+  // Remover usuário (soft delete)
+  deleteUser: (userId: string) =>
+    makeRequest<import('@/types/auth').DeleteUserResponse>(`/admin/users/${userId}`, {
+      method: 'DELETE',
+    }),
+
+  // Restaurar usuário removido
+  restoreUser: (userId: string) =>
+    makeRequest<import('@/types/auth').RestoreUserResponse>(`/admin/users/${userId}/restore`, {
+      method: 'POST',
+    }),
 
   // Listar conteúdos
   getContents: (params?: {
