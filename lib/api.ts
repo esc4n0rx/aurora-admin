@@ -245,4 +245,17 @@ export const api = {
       data: import('@/types/tmdb').TMDBMovieDetails | import('@/types/tmdb').TMDBTVDetails
     }>(`/api/tmdb/details?${params}`)
   },
+
+  getLogs: (params?: import('@/types/logs').LogsParams) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : ''
+    return makeRequest<import('@/types/logs').LogsResponse>(`/admin/logs${query}`)
+  },
+
+  // Obter estatísticas de logs (Admin only)
+  getLogsStats: (params?: import('@/types/logs').LogsStatsParams) => {
+    const query = params ? '?' + new URLSearchParams(params as any).toString() : ''
+    return makeRequest<import('@/types/logs').LogsStatsResponse>(`/admin/logs/stats${query}`)
+  },
+
+  
 }

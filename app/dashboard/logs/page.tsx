@@ -25,159 +25,15 @@ import {
   Info,
   ChevronLeft,
   ChevronRight,
+  RefreshCw,
+  BarChart3,
 } from "lucide-react"
+import { useLogs } from "@/hooks/use-logs"
+import type { LogEntry } from "@/types/logs"
 
-const logs = [
-  {
-    id: 1,
-    action: "Usuário criou conta",
-    user: "João Silva",
-    email: "joao@email.com",
-    timestamp: "2024-01-15T10:30:00Z",
-    type: "user",
-    severity: "info",
-    details: "Novo registro via email",
-    ip: "192.168.1.100",
-    userAgent: "Chrome 120.0.0.0 - Windows 10",
-    location: "São Paulo, SP",
-    metadata: {
-      registrationMethod: "email",
-      referrer: "google.com",
-      device: "desktop",
-    },
-  },
-  {
-    id: 2,
-    action: "Vídeo publicado",
-    user: "Admin",
-    email: "admin@aurora.com",
-    timestamp: "2024-01-15T09:15:00Z",
-    type: "content",
-    severity: "info",
-    details: "Stranger Things - Temporada 4",
-    ip: "10.0.0.1",
-    userAgent: "Chrome 120.0.0.0 - macOS",
-    location: "Rio de Janeiro, RJ",
-    metadata: {
-      contentId: "st-s4",
-      category: "series",
-      duration: "8h 32min",
-    },
-  },
-  {
-    id: 3,
-    action: "Configuração alterada",
-    user: "Admin",
-    email: "admin@aurora.com",
-    timestamp: "2024-01-15T08:45:00Z",
-    type: "system",
-    severity: "warning",
-    details: "Modo de manutenção desativado",
-    ip: "10.0.0.1",
-    userAgent: "Chrome 120.0.0.0 - macOS",
-    location: "Rio de Janeiro, RJ",
-    metadata: {
-      setting: "maintenance_mode",
-      oldValue: "true",
-      newValue: "false",
-    },
-  },
-  {
-    id: 4,
-    action: "Usuário suspenso",
-    user: "Admin",
-    email: "admin@aurora.com",
-    timestamp: "2024-01-14T16:20:00Z",
-    type: "security",
-    severity: "critical",
-    details: "Violação dos termos de uso",
-    ip: "10.0.0.1",
-    userAgent: "Chrome 120.0.0.0 - macOS",
-    location: "Rio de Janeiro, RJ",
-    metadata: {
-      suspendedUserId: "user_123",
-      reason: "terms_violation",
-      duration: "7_days",
-    },
-  },
-  {
-    id: 5,
-    action: "Pagamento processado",
-    user: "Maria Santos",
-    email: "maria@email.com",
-    timestamp: "2024-01-14T14:10:00Z",
-    type: "payment",
-    severity: "info",
-    details: "Assinatura Premium - R$ 29,90",
-    ip: "192.168.1.200",
-    userAgent: "Safari 17.0 - iOS 17",
-    location: "Belo Horizonte, MG",
-    metadata: {
-      amount: "29.90",
-      currency: "BRL",
-      paymentMethod: "credit_card",
-      transactionId: "txn_abc123",
-    },
-  },
-  {
-    id: 6,
-    action: "Tentativa de login falhada",
-    user: "Desconhecido",
-    email: "hacker@evil.com",
-    timestamp: "2024-01-14T12:00:00Z",
-    type: "security",
-    severity: "critical",
-    details: "Múltiplas tentativas de login com credenciais inválidas",
-    ip: "203.0.113.1",
-    userAgent: "curl/7.68.0",
-    location: "Localização desconhecida",
-    metadata: {
-      attempts: 15,
-      blocked: true,
-      targetUser: "admin@aurora.com",
-    },
-  },
-  {
-    id: 7,
-    action: "Download de conteúdo",
-    user: "Pedro Costa",
-    email: "pedro@email.com",
-    timestamp: "2024-01-14T11:30:00Z",
-    type: "content",
-    severity: "info",
-    details: "Avatar: O Caminho da Água",
-    ip: "192.168.1.150",
-    userAgent: "Aurora+ Mobile App 2.1.0 - Android 13",
-    location: "Brasília, DF",
-    metadata: {
-      contentId: "avatar-2",
-      quality: "1080p",
-      fileSize: "4.2GB",
-    },
-  },
-  {
-    id: 8,
-    action: "Relatório gerado",
-    user: "Admin",
-    email: "admin@aurora.com",
-    timestamp: "2024-01-14T10:00:00Z",
-    type: "report",
-    severity: "info",
-    details: "Relatório mensal de usuários",
-    ip: "10.0.0.1",
-    userAgent: "Chrome 120.0.0.0 - macOS",
-    location: "Rio de Janeiro, RJ",
-    metadata: {
-      reportType: "monthly_users",
-      period: "2024-01",
-      recordCount: 12847,
-    },
-  },
-]
-
-const getTypeIcon = (type: string) => {
-  switch (type) {
-    case "user":
+const getTypeIcon = (category: string) => {
+  switch (category) {
+    case "auth":
       return User
     case "content":
       return Video
@@ -185,18 +41,18 @@ const getTypeIcon = (type: string) => {
       return Settings
     case "security":
       return Shield
-    case "payment":
-      return CreditCard
-    case "report":
-      return FileText
+    case "profile":
+      return User
+    case "admin":
+      return Shield
     default:
       return FileText
   }
 }
 
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case "user":
+const getTypeColor = (category: string) => {
+  switch (category) {
+    case "auth":
       return "default"
     case "content":
       return "secondary"
@@ -204,55 +60,42 @@ const getTypeColor = (type: string) => {
       return "outline"
     case "security":
       return "destructive"
-    case "payment":
+    case "profile":
       return "default"
-    case "report":
+    case "admin":
       return "secondary"
     default:
       return "secondary"
   }
 }
 
-const getSeverityIcon = (severity: string) => {
-  switch (severity) {
-    case "info":
-      return Info
-    case "warning":
-      return AlertTriangle
-    case "critical":
-      return AlertTriangle
-    default:
-      return Info
-  }
+const getStatusIcon = (statusCode: number) => {
+  if (statusCode >= 200 && statusCode < 300) return Info
+  if (statusCode >= 400) return AlertTriangle
+  return Info
 }
 
-const getSeverityColor = (severity: string) => {
-  switch (severity) {
-    case "info":
-      return "default"
-    case "warning":
-      return "secondary"
-    case "critical":
-      return "destructive"
-    default:
-      return "default"
-  }
+const getStatusColor = (statusCode: number) => {
+  if (statusCode >= 200 && statusCode < 300) return "default"
+  if (statusCode >= 400 && statusCode < 500) return "secondary"
+  if (statusCode >= 500) return "destructive"
+  return "default"
 }
 
-const getTypeLabel = (type: string) => {
-  switch (type) {
-    case "user":
-      return "Usuário"
+const getCategoryLabel = (category: string) => {
+  switch (category) {
+    case "auth":
+      return "Autenticação"
     case "content":
       return "Conteúdo"
     case "system":
       return "Sistema"
     case "security":
       return "Segurança"
-    case "payment":
-      return "Pagamento"
-    case "report":
-      return "Relatório"
+    case "profile":
+      return "Perfil"
+    case "admin":
+      return "Administração"
     default:
       return "Outros"
   }
@@ -280,160 +123,227 @@ const formatDate = (timestamp: string) => {
 }
 
 export default function LogsPage() {
+  const { 
+    logs, 
+    stats,
+    isLoading, 
+    isStatsLoading,
+    error, 
+    pagination, 
+    filters,
+    updateFilters, 
+    loadPage,
+    refreshLogs,
+    refreshStats
+  } = useLogs()
+  
   const [searchTerm, setSearchTerm] = useState("")
-  const [typeFilter, setTypeFilter] = useState("all")
-  const [severityFilter, setSeverityFilter] = useState("all")
-  const [dateFilter, setDateFilter] = useState("all")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [selectedLog, setSelectedLog] = useState<(typeof logs)[0] | null>(null)
+  const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null)
+  const [showStats, setShowStats] = useState(false)
 
-  const itemsPerPage = 10
+  const handleSearch = (value: string) => {
+    setSearchTerm(value)
+    // Note: A API não tem parâmetro de busca por texto na documentação
+    // Implementaremos filtro local por enquanto
+  }
 
-  // Filtrar logs
-  const filteredLogs = logs.filter((log) => {
-    const matchesSearch =
-      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.details.toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesType = typeFilter === "all" || log.type === typeFilter
-    const matchesSeverity = severityFilter === "all" || log.severity === severityFilter
-
-    let matchesDate = true
-    if (dateFilter !== "all") {
-      const logDate = new Date(log.timestamp)
-      const now = new Date()
-      const diffInHours = (now.getTime() - logDate.getTime()) / (1000 * 60 * 60)
-
-      switch (dateFilter) {
-        case "1h":
-          matchesDate = diffInHours <= 1
-          break
-        case "24h":
-          matchesDate = diffInHours <= 24
-          break
-        case "7d":
-          matchesDate = diffInHours <= 168
-          break
-        case "30d":
-          matchesDate = diffInHours <= 720
-          break
-      }
+  const handleCategoryFilter = (category: string) => {
+    if (category === "all") {
+      updateFilters({ actionCategory: undefined })
+    } else {
+      updateFilters({ actionCategory: category as any })
     }
+  }
 
-    return matchesSearch && matchesType && matchesSeverity && matchesDate
+  const handleDateFilter = (timeRange: string) => {
+    if (timeRange === "all") {
+      updateFilters({ startDate: undefined, endDate: undefined })
+    } else {
+      const now = new Date()
+      const days = parseInt(timeRange.replace('d', ''))
+      const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+      
+      updateFilters({
+        startDate: startDate.toISOString(),
+        endDate: now.toISOString()
+      })
+    }
+  }
+
+  const handleStatusFilter = (statusCode: string) => {
+    if (statusCode === "all") {
+      updateFilters({ statusCode: undefined })
+    } else {
+      updateFilters({ statusCode })
+    }
+  }
+
+  // Filtrar logs localmente para busca por texto
+  const filteredLogs = logs.filter((log) => {
+    if (!searchTerm) return true
+    
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      log.description.toLowerCase().includes(searchLower) ||
+      log.action_type.toLowerCase().includes(searchLower) ||
+      (log.users?.nome.toLowerCase().includes(searchLower)) ||
+      (log.users?.email.toLowerCase().includes(searchLower)) ||
+      log.ip_address.includes(searchLower)
+    )
   })
 
-  // Paginação
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedLogs = filteredLogs.slice(startIndex, startIndex + itemsPerPage)
+  const totalPages = Math.ceil(pagination.total / pagination.limit)
+  const currentPage = Math.floor(pagination.offset / pagination.limit) + 1
 
-  const clearFilters = () => {
-    setSearchTerm("")
-    setTypeFilter("all")
-    setSeverityFilter("all")
-    setDateFilter("all")
-    setCurrentPage(1)
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Logs do Sistema</h1>
+            <p className="text-muted-foreground">Monitore e analise as atividades do sistema</p>
+          </div>
+        </div>
+        
+        <Card>
+          <CardContent className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground">{error}</p>
+              <Button onClick={refreshLogs} className="mt-4">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Tentar Novamente
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Logs de Atividade</h2>
-          <p className="text-muted-foreground">Monitore todas as ações e eventos da plataforma em tempo real</p>
+          <h1 className="text-3xl font-bold tracking-tight">Logs do Sistema</h1>
+          <p className="text-muted-foreground">
+            Monitore e analise as atividades do sistema em tempo real
+          </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={clearFilters}>
-            Limpar Filtros
+          <Button 
+            variant="outline" 
+            onClick={() => setShowStats(!showStats)}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            {showStats ? 'Ocultar' : 'Mostrar'} Estatísticas
           </Button>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Exportar
+          <Button onClick={refreshLogs} disabled={isLoading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Atualizar
           </Button>
         </div>
       </div>
+
+      {/* Estatísticas */}
+      {showStats && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {stats?.actionStats.map((stat) => (
+            <Card key={stat.action_category}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {getCategoryLabel(stat.action_category)}
+                </CardTitle>
+                {(() => {
+                  const IconComponent = getTypeIcon(stat.action_category)
+                  return <IconComponent className="h-4 w-4 text-muted-foreground" />
+                })()}
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.count.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">ações registradas</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Filtros */}
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <Filter className="h-5 w-5" />
+            <Filter className="w-5 h-5" />
             <span>Filtros</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar logs..."
+                  placeholder="Buscar por ação, usuário ou IP..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tipo</label>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <label className="text-sm font-medium">Categoria</label>
+              <Select onValueChange={handleCategoryFilter} defaultValue="all">
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os tipos</SelectItem>
-                  <SelectItem value="user">Usuário</SelectItem>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
+                  <SelectItem value="auth">Autenticação</SelectItem>
                   <SelectItem value="content">Conteúdo</SelectItem>
                   <SelectItem value="system">Sistema</SelectItem>
                   <SelectItem value="security">Segurança</SelectItem>
-                  <SelectItem value="payment">Pagamento</SelectItem>
-                  <SelectItem value="report">Relatório</SelectItem>
+                  <SelectItem value="profile">Perfil</SelectItem>
+                  <SelectItem value="admin">Administração</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Severidade</label>
-              <Select value={severityFilter} onValueChange={setSeverityFilter}>
+              <label className="text-sm font-medium">Status</label>
+              <Select onValueChange={handleStatusFilter} defaultValue="all">
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="info">Info</SelectItem>
-                  <SelectItem value="warning">Aviso</SelectItem>
-                  <SelectItem value="critical">Crítico</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="200">Sucesso (200)</SelectItem>
+                  <SelectItem value="201">Criado (201)</SelectItem>
+                  <SelectItem value="400">Erro Cliente (400+)</SelectItem>
+                  <SelectItem value="500">Erro Servidor (500+)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Período</label>
-              <Select value={dateFilter} onValueChange={setDateFilter}>
+              <Select onValueChange={handleDateFilter} defaultValue="all">
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Todos os períodos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todo período</SelectItem>
-                  <SelectItem value="1h">Última hora</SelectItem>
-                  <SelectItem value="24h">Últimas 24h</SelectItem>
-                  <SelectItem value="7d">Últimos 7 dias</SelectItem>
-                  <SelectItem value="30d">Últimos 30 dias</SelectItem>
+                  <SelectItem value="all">Todos os períodos</SelectItem>
+                  <SelectItem value="1">Último dia</SelectItem>
+                  <SelectItem value="7">Últimos 7 dias</SelectItem>
+                  <SelectItem value="30">Últimos 30 dias</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Resultados</label>
-              <div className="text-sm text-muted-foreground pt-2">
-                {filteredLogs.length} de {logs.length} logs
-              </div>
-            </div>
+          <div className="mt-4 text-sm text-muted-foreground">
+            {filteredLogs.length} de {pagination.total} logs encontrados
           </div>
         </CardContent>
       </Card>
@@ -443,249 +353,297 @@ export default function LogsPage() {
         <CardHeader>
           <CardTitle>Atividades Recentes</CardTitle>
           <CardDescription>
-            Página {currentPage} de {totalPages} ({filteredLogs.length} resultados)
+            Página {currentPage} de {totalPages} ({pagination.total} resultados)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {paginatedLogs.map((log) => {
-              const IconComponent = getTypeIcon(log.type)
-              const SeverityIcon = getSeverityIcon(log.severity)
-
-              return (
-                <div
-                  key={log.id}
-                  className="flex items-start space-x-4 p-4 rounded-lg border border-border/50 hover:border-border transition-colors cursor-pointer"
-                  onClick={() => setSelectedLog(log)}
-                >
-                  <div className="flex-shrink-0">
-                    <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
-                      <IconComponent className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                  </div>
-
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">{log.action}</h4>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={getSeverityColor(log.severity)} className="flex items-center space-x-1">
-                          <SeverityIcon className="w-3 h-3" />
-                          <span className="capitalize">{log.severity}</span>
-                        </Badge>
-                        <Badge variant={getTypeColor(log.type)}>{getTypeLabel(log.type)}</Badge>
-                        <span className="text-sm text-muted-foreground">{formatDate(log.timestamp)}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src="/placeholder-user.jpg" alt={log.user} />
-                        <AvatarFallback className="text-xs">
-                          {log.user
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm text-muted-foreground">
-                        {log.user} ({log.email})
-                      </span>
-                      <span className="text-sm text-muted-foreground">•</span>
-                      <span className="text-sm text-muted-foreground">{log.ip}</span>
-                      <span className="text-sm text-muted-foreground">•</span>
-                      <span className="text-sm text-muted-foreground">{log.location}</span>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground">{log.details}</p>
-                  </div>
-
-                  <Button variant="ghost" size="icon" className="flex-shrink-0">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Paginação */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-muted-foreground">
-                Mostrando {startIndex + 1} a {Math.min(startIndex + itemsPerPage, filteredLogs.length)} de{" "}
-                {filteredLogs.length} resultados
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Anterior
-                </Button>
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const page = i + 1
-                    return (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(page)}
-                        className="w-8 h-8"
-                      >
-                        {page}
-                      </Button>
-                    )
-                  })}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  Próximo
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Carregando logs...</span>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          ) : filteredLogs.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground">Nenhum log encontrado</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredLogs.map((log) => {
+                const IconComponent = getTypeIcon(log.action_category)
+                const StatusIcon = getStatusIcon(log.status_code)
 
-      {/* Modal de Detalhes do Log */}
-      <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <FileText className="h-5 w-5" />
-              <span>Detalhes do Log</span>
-            </DialogTitle>
-            <DialogDescription>Informações completas sobre a atividade registrada</DialogDescription>
-          </DialogHeader>
-
-          {selectedLog && (
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-                <TabsTrigger value="technical">Detalhes Técnicos</TabsTrigger>
-                <TabsTrigger value="metadata">Metadados</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{selectedLog.action}</span>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={getSeverityColor(selectedLog.severity)}>{selectedLog.severity}</Badge>
-                        <Badge variant={getTypeColor(selectedLog.type)}>{getTypeLabel(selectedLog.type)}</Badge>
+                return (
+                  <div
+                    key={log.id}
+                    className="flex items-start space-x-4 p-4 rounded-lg border border-border/50 hover:border-border transition-colors cursor-pointer"
+                    onClick={() => setSelectedLog(log)}
+                  >
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+                        <IconComponent className="w-5 h-5 text-muted-foreground" />
                       </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Usuário</label>
+                    </div>
+
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">{log.description}</h4>
                         <div className="flex items-center space-x-2">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src="/placeholder-user.jpg" alt={selectedLog.user} />
-                            <AvatarFallback className="text-xs">
-                              {selectedLog.user
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{selectedLog.user}</p>
-                            <p className="text-sm text-muted-foreground">{selectedLog.email}</p>
-                          </div>
+                          <Badge 
+                            variant={getStatusColor(log.status_code)} 
+                            className="flex items-center space-x-1"
+                          >
+                            <StatusIcon className="w-3 h-3" />
+                            <span>{log.status_code}</span>
+                          </Badge>
+                          <Badge variant={getTypeColor(log.action_category)}>
+                            {getCategoryLabel(log.action_category)}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {formatDate(log.created_at)}
+                          </span>
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Data e Hora</label>
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>{new Date(selectedLog.timestamp).toLocaleString("pt-BR")}</span>
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src="/placeholder-user.jpg" alt={log.users?.nome || 'Unknown'} />
+                          <AvatarFallback className="text-xs">
+                            {log.users?.nome
+                              ? log.users.nome
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                              : "UK"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm text-muted-foreground">
+                          {log.users?.nome || 'Usuário desconhecido'} ({log.users?.email || 'Email não disponível'})
+</span>
+<span className="text-sm text-muted-foreground">•</span>
+<span className="text-sm text-muted-foreground">{log.ip_address}</span>
+<span className="text-sm text-muted-foreground">•</span>
+<span className="text-sm text-muted-foreground">
+{log.response_time_ms}ms
+</span>
+</div>
+                  <p className="text-sm text-muted-foreground">
+                    {log.method} {log.endpoint}
+                  </p>
+                </div>
+
+                <Button variant="ghost" size="icon" className="flex-shrink-0">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Paginação */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <div className="text-sm text-muted-foreground">
+            Mostrando {pagination.offset + 1} a {Math.min(pagination.offset + pagination.limit, pagination.total)} de{" "}
+            {pagination.total} resultados
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => loadPage(Math.max(currentPage - 1, 1))}
+              disabled={currentPage === 1 || isLoading}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Button>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const page = i + 1
+                return (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => loadPage(page)}
+                    className="w-8 h-8"
+                    disabled={isLoading}
+                  >
+                    {page}
+                  </Button>
+                )
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => loadPage(Math.min(currentPage + 1, totalPages))}
+              disabled={currentPage === totalPages || isLoading}
+            >
+              Próximo
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+
+  {/* Modal de Detalhes do Log */}
+  <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
+    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="flex items-center space-x-2">
+          <FileText className="h-5 w-5" />
+          <span>Detalhes do Log</span>
+        </DialogTitle>
+        <DialogDescription>Informações completas sobre a atividade registrada</DialogDescription>
+      </DialogHeader>
+
+      {selectedLog && (
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="technical">Detalhes Técnicos</TabsTrigger>
+            <TabsTrigger value="metadata">Metadados</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{selectedLog.description}</span>
+                  <div className="flex items-center space-x-2">
+                    <Badge variant={getStatusColor(selectedLog.status_code)}>
+                      {selectedLog.status_code}
+                    </Badge>
+                    <Badge variant={getTypeColor(selectedLog.action_category)}>
+                      {getCategoryLabel(selectedLog.action_category)}
+                    </Badge>
+                  </div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Usuário</label>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src="/placeholder-user.jpg" alt={selectedLog.users?.nome || 'Unknown'} />
+                          <AvatarFallback className="text-xs">
+                            {selectedLog.users?.nome
+                              ? selectedLog.users.nome
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                              : "UK"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{selectedLog.users?.nome || 'Usuário desconhecido'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {selectedLog.users?.email || 'Email não disponível'}
+                          </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">Descrição</label>
-                      <p className="text-sm bg-secondary/50 p-3 rounded-lg">{selectedLog.details}</p>
+                    {selectedLog.profiles && (
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Perfil</label>
+                        <p className="mt-1">{selectedLog.profiles.nome}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Ação</label>
+                      <p className="mt-1 font-mono text-sm">{selectedLog.action_type}</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Localização</label>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm">{selectedLog.location}</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Endereço IP</label>
-                        <div className="flex items-center space-x-2">
-                          <code className="text-sm bg-secondary px-2 py-1 rounded">{selectedLog.ip}</code>
-                        </div>
-                      </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Data e Hora</label>
+                      <p className="mt-1">{new Date(selectedLog.created_at).toLocaleString('pt-BR')}</p>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  </div>
 
-              <TabsContent value="technical" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Informações Técnicas</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">User Agent</label>
-                      <code className="text-sm bg-secondary p-3 rounded-lg block">{selectedLog.userAgent}</code>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">IP Address</label>
+                      <p className="mt-1 font-mono">{selectedLog.ip_address}</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">ID do Log</label>
-                        <code className="text-sm bg-secondary px-2 py-1 rounded">{selectedLog.id}</code>
-                      </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Request ID</label>
+                      <p className="mt-1 font-mono text-sm">{selectedLog.request_id}</p>
+                    </div>
 
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">Timestamp</label>
-                        <code className="text-sm bg-secondary px-2 py-1 rounded">{selectedLog.timestamp}</code>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Tempo de Resposta</label>
+                      <p className="mt-1">{selectedLog.response_time_ms}ms</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Status Code</label>
+                      <div className="mt-1">
+                        <Badge variant={getStatusColor(selectedLog.status_code)}>
+                          {selectedLog.status_code}
+                        </Badge>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <TabsContent value="metadata" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Metadados Adicionais</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {Object.entries(selectedLog.metadata).map(([key, value]) => (
-                        <div key={key} className="flex items-center justify-between p-2 bg-secondary/30 rounded">
-                          <span className="text-sm font-medium capitalize">{key.replace(/_/g, " ")}</span>
-                          <code className="text-sm bg-secondary px-2 py-1 rounded">{String(value)}</code>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
-  )
+          <TabsContent value="technical" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações Técnicas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Método HTTP</label>
+                    <p className="mt-1 font-mono">{selectedLog.method}</p>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Endpoint</label>
+                    <p className="mt-1 font-mono text-sm break-all">{selectedLog.endpoint}</p>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-medium text-muted-foreground">User Agent</label>
+                    <p className="mt-1 text-sm break-all">{selectedLog.user_agent}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="metadata" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Metadados</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 ? (
+                  <pre className="bg-muted p-4 rounded-lg text-sm overflow-auto">
+                    {JSON.stringify(selectedLog.metadata, null, 2)}
+                  </pre>
+                ) : (
+                  <p className="text-muted-foreground">Nenhum metadado disponível</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
+    </DialogContent>
+  </Dialog>
+</div>
+)
 }
